@@ -1,0 +1,66 @@
+<h3>{{title}}</h3>
+
+{{#if error}}
+  <div class="alert alert-danger">{{error}}</div>
+{{/if}}
+
+<div class="card p-3">
+  <form action="{{action}}" method="POST">
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="flightNo" class="form-label">Flight No:</label>
+        <input type="text" id="flightNo" name="flightNo" class="form-control" value="{{flight.flightNo}}" required>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label for="airline" class="form-label">Airline:</label>
+        <input type="text" id="airline" name="airline" class="form-control" value="{{flight.airline}}" required>
+      </div>
+    </div>
+    
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="origin" class="form-label">Origin:</label>
+        <input type="text" id="origin" name="origin" class="form-control" value="{{flight.origin}}" required>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label for="destination" class="form-label">Destination:</label>
+        <input type="text" id="destination" name="destination" class="form-control" value="{{flight.destination}}" required>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="departureTime" class="form-label">Departure Time:</label>
+        <input type="datetime-local" id="departureTime" name="departureTime" class="form-control" value="{{formatDate flight.departureTime}}" required>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label for="arrivalTime" class="form-label">Arrival Time:</label>
+        <input type="datetime-local" id="arrivalTime" name="arrivalTime" class="form-control" value="{{formatDate flight.arrivalTime}}" required>
+      </div>
+    </div>
+    
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label for="aircraftType" class="form-label">Aircraft Type:</label>
+        <input type="text" id="aircraftType" name="aircraftType" class="form-control" value="{{flight.aircraftType}}" placeholder="e.g. A320" required>
+      </div>
+      <div class="col-md-4 mb-3">
+        <label for="seatCapacity" class="form-label">Seat Capacity:</label>
+        <input type="number" id="seatCapacity" name="seatCapacity" class="form-control" value="{{flight.seatCapacity}}" min="1" required>
+      </div>
+      <div class="col-md-4 mb-3">
+        <label for="price" class="form-label">Price (₱):</label>
+        <input type="number" id="price" name="price" class="form-control" value="{{flight.price}}" min="0" step="0.01" required>
+      </div>
+    </div>
+    
+    <button type="submit" class="btn btn-primary">
+        {{#if isNew}}
+            Add Flight
+        {{else}}
+            Update Flight
+        {{/if}}
+    </button>
+    <a href="/admin/flights" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
