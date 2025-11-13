@@ -1,0 +1,19 @@
+<div class="text-center mt-5">
+  <h1 class="display-4">Welcome to CCS Airlines</h1>
+  <p class="lead">Your trusted partner for air travel</p>
+  
+  {{#if user}}
+    <p class="mt-4">Hello, <strong>{{user.name}}</strong>!</p>
+    {{#if (eq user.role "admin")}}
+      <a href="/admin/flights" class="btn btn-primary btn-lg">Manage Flights</a>
+      <a href="/admin/users" class="btn btn-secondary btn-lg">Manage Users</a>
+    {{else}}
+      <a href="/flights/search" class="btn btn-primary btn-lg">Search Flights</a>
+      <a href="/reservations/list" class="btn btn-secondary btn-lg">My Reservations</a>
+    {{/if}}
+  {{else}}
+    <p class="mt-4">Please login or register to continue</p>
+    <a href="/login" class="btn btn-primary btn-lg">Login</a>
+    <a href="/register" class="btn btn-secondary btn-lg">Register</a>
+  {{/if}}
+</div>

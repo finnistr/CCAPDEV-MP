@@ -1,0 +1,84 @@
+<h2 class="text-center mb-4">Search Flights</h2>
+
+{{#if error}}
+  <div class="alert alert-danger">{{error}}</div>
+{{/if}}
+
+<div class="card p-4 mb-4">
+  <form method="POST" action="/flights/search">
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="origin" class="form-label">Origin</label>
+        <select class="form-select" id="origin" name="origin" required>
+          <option value="">Select Origin</option>
+          {{#each origins}}
+            <option value="{{this}}" {{#if (eq this ../searchParams.origin)}}selected{{/if}}>{{this}}</option>
+          {{/each}}
+        </select>
+      </div>
+      
+      <div class="col-md-6 mb-3">
+        <label for="destination" class="form-label">Destination</label>
+        <select class="form-select" id="destination" name="destination" required>
+          <option value="">Select Destination</option>
+          {{#each destinations}}
+            <option value="{{this}}" {{#if (eq this ../searchParams.destination)}}selected{{/if}}>{{this}}</option>
+          {{/each}}
+        </select>
+      </div>
+    </div>
+    
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="departureDate" class="form-label">Departure Date</label>
+        <input type="date" class="form-control" id="departureDate" name="departureDate" 
+               value="{{searchParams.departureDate}}" required>
+      </div>
+      
+      <div class="col-md-6 mb-3">
+        <label for="passengers" class="form-label">Passengers</label>
+        <input type="number" class="form-control" id="passengers" name="passengers" value="1" min="1">
+      </div>
+    </div>
+    
+    <button type="submit" class="btn btn-primary w-100">Search Flights</button>
+  </form>
+</div>
+
+{{#if searched}}
+  {{#if flights}}
+    <h4 class="mb-3 text-center">Available Flights ({{flights.length}} found)</h4>
+    {{#each flights}}
+      <div class="card mb-3">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-8">
+              <h5 class="card-title text-success">{{this.airline}}</h5>
+              <p class="card-text mb-1"><strong>Flight No:</strong> {{this.flightNumber}}</p>
+              <p class="card-text mb-1"><strong>Route:</strong> {{this.origin}} → {{this.destination}}</p>
+              <p class="card-text mb-1"><strong>Departure:</strong> {{formatDate this.departureTime}} at {{formatTime this.departureTime}}</p>
+              <p class="card-text mb-1"><strong>Arrival:</strong> {{formatDate this.arrivalTime}} at {{formatTime this.arrivalTime}}</p>
+              <p class="card-text mb-1"><strong>Aircraft:</strong> {{this.aircraft}}</p>
+              <p class="card-text mb-1">
+                <strong>Available Seats:</strong> 
+                <span class="badge {{#if this.availableSeats}}bg-success{{else}}bg-danger{{/if}}">
+                  {{this.availableSeats}} / {{this.seatCapacity}}
+                </span>
+              </p>
+            </div>
+            <div class="col-md-4 text-end">
+              <p class="card-text mb-3"><strong>Price:</strong><br><span class="text-success fs-3">₱{{this.price}}</span><br><small class="text-muted">per passenger</small></p>
+              {{#if this.availableSeats}}
+                <a href="/reservations/new/{{this._id}}" class="btn btn-success btn-lg w-100">Book Now</a>
+              {{else}}
+                <button class="btn btn-secondary btn-lg w-100" disabled>Fully Booked</button>
+              {{/if}}
+            </div>
+          </div>
+        </div>
+      </div>
+    {{/each}}
+  {{else}}
+    <div class="alert alert-warning">No flights found for your search criteria. Try different dates or routes.</div>
+  {{/if}}
+{{/if}}

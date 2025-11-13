@@ -1,0 +1,136 @@
+<h2 class="text-center mb-4">Edit Reservation</h2>
+
+<div class="card mb-4 bg-light">
+  <div class="card-body">
+    <h5 class="text-primary">Flight Details</h5>
+    <p><strong>{{reservation.flightId.airline}}</strong> - Flight {{reservation.flightId.flightNumber}}</p>
+    <p>{{reservation.flightId.origin}} → {{reservation.flightId.destination}}</p>
+    <p>{{formatDate reservation.flightId.departureTime}} at {{formatTime reservation.flightId.departureTime}}</p>
+  </div>
+</div>
+
+<div class="card p-4">
+  <form method="POST" action="/reservations/update/{{reservation._id}}" id="editForm">
+    <div class="mb-3">
+      <label class="form-label">Passenger</label>
+      <input type="text" class="form-control" value="{{reservation.passengerName}}" disabled>
+    </div>
+    
+    <div class="mb-3">
+      <label class="form-label">Passport Number</label>
+      <input type="text" class="form-control" value="{{reservation.passport}}" disabled>
+    </div>
+    
+    <h5 class="mt-4">Modifiable Details</h5>
+    
+    <div class="mb-3">
+      <label for="meal" class="form-label">Meal Option</label>
+      <select class="form-select" id="meal" name="meal" required onchange="updateTotal()">
+        <option value="None" {{#if (eq reservation.meal 'None')}}selected{{/if}}>None - ₱0</option>
+        <option value="Standard" {{#if (eq reservation.meal 'Standard')}}selected{{/if}}>Standard - ₱50</option>
+        <option value="Vegetarian" {{#if (eq reservation.meal 'Vegetarian')}}selected{{/if}}>Vegetarian - ₱60</option>
+        <option value="Kosher" {{#if (eq reservation.meal 'Kosher')}}selected{{/if}}>Kosher - ₱70</option>
+      </select>
+    </div>
+    
+    <div class="mb-3">
+      <label class="form-label">Seat Selection</label>
+      <p class="text-muted small">Green is your current seat, gray seats are taken, white seats are available.</p>
+      <div id="seatMap" class="container text-center mb-3"></div>
+      <input type="text" id="seat" name="seat" class="form-control" placeholder="Selected seat" value="{{reservation.seat}}" readonly required>
+    </div>
+    
+    <div class="mb-3">
+      <label for="baggageWeight" class="form-label">Baggage Weight (kg) - ₱5 per kg</label>
+      <input type="number" class="form-control" id="baggageWeight" name="baggageWeight" value="{{reservation.baggageWeight}}" min="0" max="50" required onchange="updateTotal()">
+      <small class="text-muted">Maximum 50kg per passenger</small>
+    </div>
+    
+    <div class="alert alert-info">
+      <h6>Price Breakdown:</h6>
+      <p class="mb-1">Base Fare: ₱<span id="baseFare">{{reservation.flightId.price}}</span></p>
+      <p class="mb-1">Meal: ₱<span id="mealPrice">{{reservation.mealPrice}}</span></p>
+      <p class="mb-1">Baggage: ₱<span id="baggagePrice">{{reservation.baggagePrice}}</span></p>
+      <hr>
+      <h5 class="mb-0">Total Amount: ₱<span id="totalAmount">{{reservation.totalAmount}}</span></h5>
+    </div>
+    
+    <div class="btn-group w-100">
+      <button type="submit" class="btn btn-primary btn-lg">Update Reservation</button>
+      <a href="/reservations/list" class="btn btn-secondary btn-lg">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  const currentSeat = "{{reservation.seat}}";
+  const bookedSeats = {{{bookedSeats}}};
+  const seatCapacity = {{seatCapacity}};
+  const basePrice = {{reservation.flightId.price}};
+  
+  const seatMap = document.getElementById('seatMap');
+  const seatLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
+  const rows = Math.ceil(seatCapacity / 6);
+  
+  for (let row = 1; row <= rows; row++) {
+    const rowDiv = document.createElement('div');
+    rowDiv.className = 'd-flex justify-content-center mb-2';
+    
+    seatLetters.forEach((letter, index) => {
+      if (index === 3) {
+        const spacing = document.createElement('div');
+        spacing.className = 'spacing';
+        rowDiv.appendChild(spacing);
+      }
+      
+      const seatId = row + letter;
+      const seatNumber = (row - 1) * 6 + index + 1;
+      
+      if (seatNumber > seatCapacity) return;
+      
+      const seat = document.createElement('div');
+      seat.className = 'seat mx-1';
+      seat.textContent = seatId;
+      seat.dataset.seat = seatId;
+      
+      if (seatId === currentSeat) {
+        seat.classList.add('selected');
+      } else if (bookedSeats.includes(seatId)) {
+        seat.classList.add('booked');
+        seat.style.backgroundColor = '#6c757d';
+        seat.style.color = 'white';
+        seat.style.cursor = 'not-allowed';
+      } else {
+        seat.onclick = function() {
+          document.querySelectorAll('.seat:not(.booked)').forEach(s => s.classList.remove('selected'));
+          this.classList.add('selected');
+          document.getElementById('seat').value = this.dataset.seat;
+        };
+      }
+      
+      rowDiv.appendChild(seat);
+    });
+    
+    seatMap.appendChild(rowDiv);
+  }
+  
+  function updateTotal() {
+    const meal = document.getElementById('meal').value;
+    const baggageWeight = parseInt(document.getElementById('baggageWeight').value) || 0;
+    
+    const mealPrices = {
+      'None': 0,
+      'Standard': 50,
+      'Vegetarian': 60,
+      'Kosher': 70
+    };
+    
+    const mealPrice = mealPrices[meal] || 0;
+    const baggagePrice = baggageWeight * 5;
+    const totalAmount = basePrice + mealPrice + baggagePrice;
+    
+    document.getElementById('mealPrice').textContent = mealPrice;
+    document.getElementById('baggagePrice').textContent = baggagePrice;
+    document.getElementById('totalAmount').textContent = totalAmount;
+  }
+</script>

@@ -1,0 +1,53 @@
+<h2 class="text-center mb-4">My Reservations</h2>
+
+{{#if reservations}}
+  <div class="row">
+    {{#each reservations}}
+      <div class="col-md-6 mb-4">
+        <div class="card {{#if (eq this.status 'cancelled')}}border-danger{{else}}border-success{{/if}}">
+          <div class="card-header {{#if (eq this.status 'cancelled')}}bg-danger{{else}}bg-success{{/if}} text-white">
+            <h5 class="mb-0">{{this.flightId.airline}} - {{this.flightId.flightNumber}}</h5>
+          </div>
+          <div class="card-body">
+            <p><strong>Route:</strong> {{this.flightId.origin}} → {{this.flightId.destination}}</p>
+            <p><strong>Departure:</strong> {{formatDate this.flightId.departureTime}} at {{formatTime this.flightId.departureTime}}</p>
+            <p><strong>Arrival:</strong> {{formatDate this.flightId.arrivalTime}} at {{formatTime this.flightId.arrivalTime}}</p>
+            
+            <hr>
+            
+            <p><strong>Passenger:</strong> {{this.passengerName}}</p>
+            <p><strong>Passport:</strong> {{this.passport}}</p>
+            <p><strong>Seat:</strong> <span class="badge bg-info">{{this.seat}}</span></p>
+            <p><strong>Meal:</strong> {{this.meal}} {{#if (eq this.meal 'None')}}{{else}}(₱{{this.mealPrice}}){{/if}}</p>
+            <p><strong>Baggage:</strong> {{this.baggageWeight}} kg {{#if this.baggageWeight}}(₱{{this.baggagePrice}}){{/if}}</p>
+            
+            <hr>
+            
+            <p><strong>Status:</strong> 
+              <span class="badge {{#if (eq this.status 'cancelled')}}bg-danger{{else}}bg-success{{/if}}">
+                {{this.status}}
+              </span>
+            </p>
+            <p><strong>Total Amount:</strong> <span class="text-success fs-5">₱{{this.totalAmount}}</span></p>
+            <p class="text-muted small"><strong>Booked on:</strong> {{formatDate this.createdAt}}</p>
+            
+            {{#if (eq this.status 'confirmed')}}
+              <div class="btn-group w-100 mt-3" role="group">
+                <a href="/reservations/edit/{{this._id}}" class="btn btn-warning">Edit</a>
+                <form method="POST" action="/reservations/cancel/{{this._id}}" style="flex: 1;">
+                  <button type="submit" class="btn btn-danger w-100" onclick="return confirm('Cancel this reservation? Your seat will be released.')">Cancel</button>
+                </form>
+              </div>
+            {{/if}}
+          </div>
+        </div>
+      </div>
+    {{/each}}
+  </div>
+{{else}}
+  <div class="alert alert-info text-center">
+    <h4>No reservations yet</h4>
+    <p>Book your first flight now!</p>
+    <a href="/flights/search" class="btn btn-primary">Search Flights</a>
+  </div>
+{{/if}}

@@ -1,0 +1,160 @@
+<h2 class="text-center mb-4">Book Flight</h2>
+
+<div class="card mb-4 bg-light">
+  <div class="card-body">
+    <h5 class="text-primary">Flight Details</h5>
+    <div class="row">
+      <div class="col-md-6">
+        <p class="mb-1"><strong>Airline:</strong> {{flight.airline}}</p>
+        <p class="mb-1"><strong>Flight Number:</strong> {{flight.flightNumber}}</p>
+        <p class="mb-1"><strong>Route:</strong> {{flight.origin}} → {{flight.destination}}</p>
+      </div>
+      <div class="col-md-6">
+        <p class="mb-1"><strong>Departure:</strong> {{formatDate flight.departureTime}} at {{formatTime flight.departureTime}}</p>
+        <p class="mb-1"><strong>Arrival:</strong> {{formatDate flight.arrivalTime}} at {{formatTime flight.arrivalTime}}</p>
+        <p class="mb-1"><strong>Aircraft:</strong> {{flight.aircraft}}</p>
+      </div>
+    </div>
+    <hr>
+    <div class="row">
+      <div class="col-md-6">
+        <p class="mb-0"><strong>Base Price:</strong> <span class="text-success fs-4">₱{{flight.price}}</span></p>
+      </div>
+      <div class="col-md-6">
+        <p class="mb-0"><strong>Available Seats:</strong> <span class="badge bg-info">{{flight.availableSeats}} / {{flight.seatCapacity}}</span></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card p-4">
+  <form method="POST" action="/reservations/create" id="reservationForm">
+    <input type="hidden" name="flightId" value="{{flight._id}}">
+    
+    <h5>Passenger Details</h5>
+    
+    <div class="mb-3">
+      <label for="passport" class="form-label">Passport Number</label>
+      <input type="text" class="form-control" id="passport" name="passport" required>
+    </div>
+    
+    <h5 class="mt-4">Package Details</h5>
+    
+    <div class="mb-3">
+      <label for="meal" class="form-label">Meal Option</label>
+      <select class="form-select" id="meal" name="meal" required onchange="updateTotal()">
+        <option value="None">None - ₱0</option>
+        <option value="Standard">Standard - ₱50</option>
+        <option value="Vegetarian">Vegetarian - ₱60</option>
+        <option value="Kosher">Kosher - ₱70</option>
+      </select>
+    </div>
+    
+    <div class="mb-3">
+      <label class="form-label">Seat Selection</label>
+      <p class="text-muted small">Select your seat from the map below. Green seats are available, gray seats are taken.</p>
+      <div id="seatMap" class="container text-center mb-3"></div>
+      <input type="text" id="seat" name="seat" class="form-control" placeholder="Click a seat to select" readonly required>
+    </div>
+    
+    <div class="mb-3">
+      <label for="baggageWeight" class="form-label">Baggage Weight (kg) - ₱5 per kg</label>
+      <input type="number" class="form-control" id="baggageWeight" name="baggageWeight" value="0" min="0" max="50" required onchange="updateTotal()">
+      <small class="text-muted">Maximum 50kg per passenger</small>
+    </div>
+    
+    <div class="alert alert-info">
+      <h6>Price Breakdown:</h6>
+      <p class="mb-1">Base Fare: ₱<span id="baseFare">{{flight.price}}</span></p>
+      <p class="mb-1">Meal: ₱<span id="mealPrice">0</span></p>
+      <p class="mb-1">Baggage: ₱<span id="baggagePrice">0</span></p>
+      <hr>
+      <h5 class="mb-0">Total Amount: ₱<span id="totalAmount">{{flight.price}}</span></h5>
+    </div>
+    
+    <button type="submit" class="btn btn-primary btn-lg w-100" id="submitBtn" disabled>Confirm Booking</button>
+  </form>
+</div>
+
+<script>
+  const bookedSeats = {{{bookedSeats}}};
+  const seatCapacity = {{flight.seatCapacity}};
+  const basePrice = {{flight.price}};
+  
+  // Generate seat map based on capacity
+  const seatMap = document.getElementById('seatMap');
+  const seatLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
+  const rows = Math.ceil(seatCapacity / 6);
+  
+  for (let row = 1; row <= rows; row++) {
+    const rowDiv = document.createElement('div');
+    rowDiv.className = 'd-flex justify-content-center mb-2';
+    
+    seatLetters.forEach((letter, index) => {
+      if (index === 3) {
+        const spacing = document.createElement('div');
+        spacing.className = 'spacing';
+        rowDiv.appendChild(spacing);
+      }
+      
+      const seatId = row + letter;
+      const seatNumber = (row - 1) * 6 + index + 1;
+      
+      // Only create seats up to capacity
+      if (seatNumber > seatCapacity) return;
+      
+      const seat = document.createElement('div');
+      seat.className = 'seat mx-1';
+      seat.textContent = seatId;
+      seat.dataset.seat = seatId;
+      
+      // Check if seat is booked
+      if (bookedSeats.includes(seatId)) {
+        seat.classList.add('booked');
+        seat.style.backgroundColor = '#6c757d';
+        seat.style.color = 'white';
+        seat.style.cursor = 'not-allowed';
+      } else {
+        seat.onclick = function() {
+          document.querySelectorAll('.seat:not(.booked)').forEach(s => s.classList.remove('selected'));
+          this.classList.add('selected');
+          document.getElementById('seat').value = this.dataset.seat;
+          document.getElementById('submitBtn').disabled = false;
+        };
+      }
+      
+      rowDiv.appendChild(seat);
+    });
+    
+    seatMap.appendChild(rowDiv);
+  }
+  
+  // Update total calculation
+  function updateTotal() {
+    const meal = document.getElementById('meal').value;
+    const baggageWeight = parseInt(document.getElementById('baggageWeight').value) || 0;
+    
+    const mealPrices = {
+      'None': 0,
+      'Standard': 50,
+      'Vegetarian': 60,
+      'Kosher': 70
+    };
+    
+    const mealPrice = mealPrices[meal] || 0;
+    const baggagePrice = baggageWeight * 5;
+    const totalAmount = basePrice + mealPrice + baggagePrice;
+    
+    document.getElementById('mealPrice').textContent = mealPrice;
+    document.getElementById('baggagePrice').textContent = baggagePrice;
+    document.getElementById('totalAmount').textContent = totalAmount;
+  }
+  
+  // Validate form before submit
+  document.getElementById('reservationForm').addEventListener('submit', function(e) {
+    if (!document.getElementById('seat').value) {
+      e.preventDefault();
+      alert('Please select a seat');
+    }
+  });
+</script>
