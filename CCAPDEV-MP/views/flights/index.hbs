@@ -1,0 +1,47 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 mb-1">Flights</h1>
+    <p class="text-muted mb-0">Manage all scheduled flights and view their seat availability.</p>
+  </div>
+</div>
+
+{{#if flights.length}}
+  <div class="table-responsive">
+    <table class="table align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Flight</th>
+          <th>Route</th>
+          <th>Schedule</th>
+          <th>Aircraft</th>
+          <th>Seat Capacity</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each flights}}
+          <tr>
+            <td class="fw-semibold">{{flightNumber}}</td>
+            <td>{{origin}} → {{destination}}</td>
+            <td>
+              <div>{{formatDate departureTime}}</div>
+              <div class="text-muted small">Arrives {{formatDate arrivalTime}}</div>
+            </td>
+            <td>{{aircraftType}}</td>
+            <td>{{seatCapacity}}</td>
+            <td>
+              <span class="badge bg-success">{{status}}</span>
+            </td>
+            <td class="text-end">
+              <a class="btn btn-sm btn-outline-primary" href="/flights/{{_id}}">View</a>
+            </td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+{{else}}
+  <div class="alert alert-info">No flights available yet. Add one to get started.</div>
+{{/if}}
+

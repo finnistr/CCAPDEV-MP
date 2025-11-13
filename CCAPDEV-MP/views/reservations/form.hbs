@@ -1,0 +1,284 @@
+<div class="row g-4">
+  <div class="col-12 col-lg-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h1 class="h4 mb-3">Book a Flight</h1>
+        <p class="text-muted">
+          Select a flight to continue your booking. Optional packages can be customised for each
+          passenger after booking as well.
+        </p>
+        <form class="vstack gap-3" method="get" action="/reservations/new">
+          <div>
+            <label class="form-label" for="flightId">Choose a flight</label>
+            <select class="form-select" id="flightId" name="flightId" required>
+              <option value="">Select a flight</option>
+              {{#each flights}}
+                <option value="{{_id}}" {{#if (eq ../selectedFlightId _id)}}selected{{/if}}>
+                  {{flightNumber}} · {{origin}} → {{destination}} ({{formatDate departureTime}})
+                </option>
+              {{/each}}
+            </select>
+          </div>
+          <button class="btn btn-outline-primary w-100" type="submit">Load flight details</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        {{#if error}}
+          <div class="alert alert-danger">{{error}}</div>
+        {{/if}}
+
+        {{#if selectedFlight}}
+          <div class="border rounded-3 p-3 mb-4 bg-light">
+            <div class="d-flex justify-content-between flex-wrap gap-2">
+              <div>
+                <h2 class="h5 mb-1">{{selectedFlight.flightNumber}} · {{selectedFlight.origin}} → {{selectedFlight.destination}}</h2>
+                <div class="text-muted small">
+                  Departure: {{formatDate selectedFlight.departureTime}} · Arrival:
+                  {{formatDate selectedFlight.arrivalTime}}
+                </div>
+              </div>
+              <div class="text-end">
+                <div class="fw-semibold">{{currency selectedFlight.baseFare}}</div>
+                <div class="text-muted small">per passenger</div>
+              </div>
+            </div>
+          </div>
+
+          <form id="reservationForm" action="/reservations" method="post" class="row g-3">
+            <input type="hidden" name="flightId" value="{{selectedFlight._id}}" />
+
+            <div class="col-12">
+              <h3 class="h5 mb-2">Passenger Details</h3>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="fullName">Full Name</label>
+              <input
+                class="form-control"
+                id="fullName"
+                name="fullName"
+                type="text"
+                value="{{formData.fullName}}"
+                required
+              />
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="email">Email</label>
+              <input
+                class="form-control"
+                id="email"
+                name="email"
+                type="email"
+                value="{{formData.email}}"
+                required
+              />
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="passportNumber">Passport Number</label>
+              <input
+                class="form-control"
+                id="passportNumber"
+                name="passportNumber"
+                type="text"
+                value="{{formData.passportNumber}}"
+                required
+              />
+            </div>
+
+            <div class="col-12">
+              <h3 class="h5 mt-3 mb-2">Optional Package</h3>
+              <p class="text-muted small mb-3">
+                Select add-ons for this passenger. You can edit or remove these packages after
+                booking from the reservation details page.
+              </p>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="meal">Meal Option</label>
+              <select class="form-select" id="meal" name="meal" required>
+                <option value="none" {{#if (eq formData.meal "none")}}selected{{/if}}>None (₱0)</option>
+                <option value="standard" {{#if (eq formData.meal "standard")}}selected{{/if}}>
+                  Standard - ₱{{pricing.meal.standard}}
+                </option>
+                <option value="vegetarian" {{#if (eq formData.meal "vegetarian")}}selected{{/if}}>
+                  Vegetarian - ₱{{pricing.meal.vegetarian}}
+                </option>
+                <option value="kosher" {{#if (eq formData.meal "kosher")}}selected{{/if}}>
+                  Kosher - ₱{{pricing.meal.kosher}}
+                </option>
+              </select>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">Seat Selection</label>
+              <div id="seatMap" class="d-flex flex-column gap-2 align-items-center"></div>
+              <input
+                class="form-control mt-2"
+                id="seat"
+                name="seat"
+                type="text"
+                placeholder="Selected seat"
+                value="{{formData.seat}}"
+                readonly
+                required
+              />
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="baggageCount">Number of Baggage</label>
+              <input
+                class="form-control"
+                id="baggageCount"
+                name="baggageCount"
+                type="number"
+                min="0"
+                value="{{#if formData.baggageCount}}{{formData.baggageCount}}{{else}}1{{/if}}"
+                required
+              />
+              <div class="form-text">
+                ₱{{pricing.baggagePerUnit}} per baggage
+              </div>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label" for="notes">Notes (optional)</label>
+              <textarea class="form-control" id="notes" name="notes" rows="2">{{formData.notes}}</textarea>
+            </div>
+
+            <div class="col-12">
+              <div class="card border-success mt-3" id="summaryPanel" hidden>
+                <div class="card-header bg-success text-white">
+                  <h4 class="h6 mb-0">Package Summary</h4>
+                </div>
+                <div class="card-body" id="summaryBody"></div>
+              </div>
+            </div>
+
+            <div class="col-12 text-end">
+              <button class="btn btn-primary" type="submit">Submit Reservation</button>
+            </div>
+          </form>
+        {{else}}
+          <p class="text-muted mb-0">
+            Select a flight from the list to start filling out the reservation form.
+          </p>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+</div>
+
+{{#if selectedFlight}}
+  <script>
+    (() => {
+      const seatMapElement = document.getElementById('seatMap');
+      const seatInput = document.getElementById('seat');
+      const summaryPanel = document.getElementById('summaryPanel');
+      const summaryBody = document.getElementById('summaryBody');
+      const reservedSeats = new Set({{{json reservedSeats}}}.map((seat) => seat.toUpperCase()));
+      const form = document.getElementById('reservationForm');
+
+      if (!seatMapElement || !form) return;
+
+      const seatRows = 5;
+      const seatLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+      const renderSeatMap = () => {
+        seatMapElement.innerHTML = '';
+        for (let row = 1; row <= seatRows; row += 1) {
+          const rowFragment = document.createElement('div');
+          rowFragment.className = 'd-flex gap-2';
+
+          seatLetters.forEach((letter) => {
+            if (letter === 'D') {
+              const spacer = document.createElement('div');
+              spacer.style.width = '32px';
+              rowFragment.appendChild(spacer);
+            }
+
+            const seatCode = `${row}${letter}`;
+            const seatButton = document.createElement('button');
+            seatButton.type = 'button';
+            seatButton.className = 'btn btn-outline-secondary btn-sm seat';
+            seatButton.dataset.seatCode = seatCode;
+            seatButton.textContent = seatCode;
+
+            if (reservedSeats.has(seatCode)) {
+              seatButton.disabled = true;
+              seatButton.classList.add('btn-danger', 'text-white');
+            }
+
+            rowFragment.appendChild(seatButton);
+          });
+
+          seatMapElement.appendChild(rowFragment);
+        }
+      };
+
+      const updateSummary = () => {
+        const mealSelect = document.getElementById('meal');
+        const baggageInput = document.getElementById('baggageCount');
+        const fullNameInput = document.getElementById('fullName');
+        const seatValue = seatInput.value;
+
+        if (!fullNameInput.value || !mealSelect.value || !seatValue) {
+          summaryPanel.hidden = true;
+          return;
+        }
+
+        const mealPrices = {{{json pricing.meal}}};
+        const baggagePrice = {{pricing.baggagePerUnit}};
+        const mealName = mealSelect.options[mealSelect.selectedIndex].textContent;
+        const mealPrice = mealPrices[mealSelect.value] || 0;
+        const baggageCount = Number(baggageInput.value) || 0;
+
+        const total = mealPrice + baggageCount * baggagePrice;
+
+        summaryBody.innerHTML = `
+          <p class="mb-2">
+            <strong>Passenger:</strong> ${fullNameInput.value}<br/>
+            <strong>Meal:</strong> ${mealName}<br/>
+            <strong>Seat:</strong> ${seatValue || 'Not selected'}<br/>
+            <strong>Baggage:</strong> ${baggageCount} × ₱${baggagePrice}
+          </p>
+          <h5 class="mb-0">Total Add-on Price: ₱${total.toFixed(2)}</h5>
+        `;
+        summaryPanel.hidden = false;
+      };
+
+      seatMapElement.addEventListener('click', (event) => {
+        const button = event.target.closest('.seat');
+        if (!button || button.disabled) return;
+
+        seatMapElement.querySelectorAll('.seat').forEach((seat) => seat.classList.remove('btn-success', 'text-white'));
+        button.classList.add('btn-success', 'text-white');
+        seatInput.value = button.dataset.seatCode;
+        updateSummary();
+      });
+
+      form.addEventListener('input', (event) => {
+        if (['fullName', 'meal', 'baggageCount'].includes(event.target.id)) {
+          updateSummary();
+        }
+      });
+
+      renderSeatMap();
+      if (seatInput.value) {
+        const preselectedSeatButton = seatMapElement.querySelector(`[data-seat-code="${seatInput.value}"]`);
+        if (preselectedSeatButton) {
+          preselectedSeatButton.classList.add('btn-success', 'text-white');
+        }
+      }
+
+      updateSummary();
+    })();
+  </script>
+{{/if}}
+

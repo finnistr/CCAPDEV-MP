@@ -1,0 +1,148 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 mb-1">Reservation Details</h1>
+    <p class="text-muted mb-0">
+      {{reservation.flight.flightNumber}} · {{reservation.flight.origin}} → {{reservation.flight.destination}}
+    </p>
+  </div>
+  <a class="btn btn-outline-secondary" href="/reservations">Back to reservations</a>
+</div>
+
+{{#if error}}
+  <div class="alert alert-danger">{{error}}</div>
+{{/if}}
+
+<div class="row g-4">
+  <div class="col-12 col-lg-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Flight Summary</h2>
+        <dl class="row mb-0 small">
+          <dt class="col-5 text-muted">Flight Number</dt>
+          <dd class="col-7">{{reservation.flight.flightNumber}}</dd>
+          <dt class="col-5 text-muted">Route</dt>
+          <dd class="col-7">{{reservation.flight.origin}} → {{reservation.flight.destination}}</dd>
+          <dt class="col-5 text-muted">Departure</dt>
+          <dd class="col-7">{{formatDate reservation.flight.departureTime}}</dd>
+          <dt class="col-5 text-muted">Arrival</dt>
+          <dd class="col-7">{{formatDate reservation.flight.arrivalTime}}</dd>
+          <dt class="col-5 text-muted">Status</dt>
+          <dd class="col-7"><span class="badge text-bg-success">{{reservation.status}}</span></dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-8">
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Passengers & Optional Packages</h2>
+        <div class="vstack gap-4">
+          {{#each reservation.passengers}}
+            <section class="border rounded-3 p-3">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <h3 class="h6 mb-1">{{fullName}}</h3>
+                  <div class="text-muted small">{{email}} · Passport {{passportNumber}}</div>
+                </div>
+                <form
+                  method="post"
+                  action="/reservations/{{../reservation._id}}/passengers/{{_id}}/package"
+                  onsubmit="return confirm('Remove optional package for {{fullName}}?');"
+                >
+                  <input type="hidden" name="_method" value="DELETE" />
+                  <button class="btn btn-sm btn-outline-danger" type="submit">Remove optional package</button>
+                </form>
+              </div>
+              <form
+                class="row g-3 align-items-end"
+                method="post"
+                action="/reservations/{{../reservation._id}}/passengers/{{_id}}/package"
+              >
+                <input type="hidden" name="_method" value="PUT" />
+
+                <div class="col-12 col-md-4">
+                  <label class="form-label">Meal</label>
+                  <select class="form-select" name="meal">
+                    <option value="none" {{#if (eq optionalPackage.meal "none")}}selected{{/if}}>None (₱0)</option>
+                    <option value="standard" {{#if (eq optionalPackage.meal "standard")}}selected{{/if}}>
+                      Standard - ₱{{lookup ../mealPricing "standard"}}
+                    </option>
+                    <option value="vegetarian" {{#if (eq optionalPackage.meal "vegetarian")}}selected{{/if}}>
+                      Vegetarian - ₱{{lookup ../mealPricing "vegetarian"}}
+                    </option>
+                    <option value="kosher" {{#if (eq optionalPackage.meal "kosher")}}selected{{/if}}>
+                      Kosher - ₱{{lookup ../mealPricing "kosher"}}
+                    </option>
+                  </select>
+                </div>
+
+                <div class="col-12 col-md-2">
+                  <label class="form-label">Seat</label>
+                  <input
+                    class="form-control"
+                    name="seat"
+                    type="text"
+                    value="{{optionalPackage.seat}}"
+                    placeholder="1A"
+                  />
+                </div>
+
+                <div class="col-12 col-md-3">
+                  <label class="form-label">Baggage</label>
+                  <input
+                    class="form-control"
+                    name="baggageCount"
+                    type="number"
+                    min="0"
+                    value="{{optionalPackage.baggageCount}}"
+                  />
+                  <div class="form-text">₱{{../baggagePrice}} per bag</div>
+                </div>
+
+                <div class="col-12 col-md-3">
+                  <label class="form-label">Notes</label>
+                  <input class="form-control" name="notes" type="text" value="{{optionalPackage.notes}}" />
+                </div>
+
+                <div class="col-12">
+                  <div class="d-flex flex-wrap gap-3 align-items-center">
+                    <div class="text-muted small">
+                      Current package cost:
+                      <strong>
+                        {{currency
+                          (add optionalPackage.mealPrice optionalPackage.baggagePrice optionalPackage.seatPrice)
+                        }}
+                      </strong>
+                    </div>
+                    <button class="btn btn-sm btn-primary" type="submit">Update optional package</button>
+                  </div>
+                </div>
+              </form>
+            </section>
+          {{/each}}
+        </div>
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Reservation Totals</h2>
+        <div class="row gy-2">
+          <div class="col-6">
+            <div class="text-muted small">Base Fare Total</div>
+            <div class="fw-semibold">{{currency reservation.baseFareTotal}}</div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Optional Packages</div>
+            <div class="fw-semibold">{{currency reservation.optionalPackageTotal}}</div>
+          </div>
+          <div class="col-12">
+            <div class="text-muted small">Grand Total</div>
+            <div class="display-6">{{currency reservation.grandTotal}}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

@@ -1,0 +1,9 @@
+.seat {
+  min-width: 48px;
+  min-height: 40px;
+}
+
+.seat.btn-danger {
+  cursor: not-allowed;
+}
+

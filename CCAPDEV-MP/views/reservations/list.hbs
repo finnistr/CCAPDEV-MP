@@ -1,0 +1,166 @@
+<div class="row g-4">
+  <div class="col-12 col-lg-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h1 class="h4 mb-3">My Reservations</h1>
+        {{#if reservations.length}}
+          <div class="list-group" id="reservationList">
+            {{#each reservations}}
+              <button
+                type="button"
+                class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                data-reservation-id="{{_id}}"
+              >
+                <span>
+                  <span class="fw-semibold">{{flight.flightNumber}}</span>
+                  <br />
+                  <span class="text-muted small">{{flight.origin}} → {{flight.destination}}</span>
+                </span>
+                <span class="badge text-bg-{{#if (eq status 'Cancelled')}}danger{{else}}success{{/if}}">
+                  {{status}}
+                </span>
+              </button>
+            {{/each}}
+          </div>
+        {{else}}
+          <p class="text-muted mb-0">You do not have any reservations yet.</p>
+          <a class="btn btn-primary mt-3" href="/reservations/new">Book your first flight</a>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-8">
+    <div class="card shadow-sm h-100">
+      <div class="card-body" id="reservationDetailsPane">
+        {{#if reservations.length}}
+          {{#with (lookup reservations 0)}}
+            <h2 class="h5 mb-3">Reservation Summary</h2>
+            <div class="mb-3">
+              <div class="fw-semibold">{{flight.flightNumber}} · {{flight.origin}} → {{flight.destination}}</div>
+              <div class="text-muted small">Booked on {{formatDate createdAt}}</div>
+            </div>
+            <div class="mb-3">
+              <div class="fw-semibold">Passengers</div>
+              <ul class="list-group list-group-flush">
+                {{#each passengers}}
+                  <li class="list-group-item px-0">
+                    <div class="fw-semibold">{{fullName}}</div>
+                    <div class="text-muted small">{{email}} · Passport {{passportNumber}}</div>
+                    <div class="mt-2">
+                      <span class="badge text-bg-light">
+                        Seat:
+                        {{#if optionalPackage.seat}}
+                          {{optionalPackage.seat}}
+                        {{else}}
+                          N/A
+                        {{/if}}
+                      </span>
+                      <span class="badge text-bg-light">Meal: {{optionalPackage.meal}}</span>
+                      <span class="badge text-bg-light">Baggage: {{optionalPackage.baggageCount}}</span>
+                    </div>
+                  </li>
+                {{/each}}
+              </ul>
+            </div>
+            <div class="d-flex justify-content-between">
+              <div>
+                <div class="text-muted small">Base Fare Total</div>
+                <div>{{currency baseFareTotal}}</div>
+              </div>
+              <div>
+                <div class="text-muted small">Optional Packages</div>
+                <div>{{currency optionalPackageTotal}}</div>
+              </div>
+              <div>
+                <div class="text-muted small">Grand Total</div>
+                <div class="fw-semibold">{{currency grandTotal}}</div>
+              </div>
+            </div>
+            <a class="btn btn-outline-primary mt-3" href="/reservations/{{_id}}">View full details</a>
+          {{/with}}
+        {{else}}
+          <h2 class="h5 mb-3">Reservation Summary</h2>
+          <p class="text-muted mb-0">Select a reservation to view its details.</p>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+</div>
+
+{{#if reservations.length}}
+  <script>
+    (() => {
+      const reservations = {{{json reservations}}};
+      const detailsPane = document.getElementById('reservationDetailsPane');
+      const list = document.getElementById('reservationList');
+
+      if (!list) return;
+
+      const renderReservation = (reservationId) => {
+        const reservation = reservations.find((item) => item._id === reservationId);
+        if (!reservation) return;
+
+        const passengerBadges = reservation.passengers
+          .map((passenger) => {
+            return `
+              <li class="list-group-item px-0">
+                <div class="fw-semibold">${passenger.fullName}</div>
+                <div class="text-muted small">${passenger.email} · Passport ${passenger.passportNumber}</div>
+                <div class="mt-2 d-flex flex-wrap gap-2">
+                  <span class="badge text-bg-light">Seat: ${passenger.optionalPackage.seat || 'N/A'}</span>
+                  <span class="badge text-bg-light">Meal: ${passenger.optionalPackage.meal}</span>
+                  <span class="badge text-bg-light">Baggage: ${passenger.optionalPackage.baggageCount}</span>
+                </div>
+              </li>
+            `;
+          })
+          .join('');
+
+        detailsPane.innerHTML = `
+          <h2 class="h5 mb-3">Reservation Summary</h2>
+          <div class="mb-3">
+            <div class="fw-semibold">${reservation.flight.flightNumber} · ${reservation.flight.origin} → ${reservation.flight.destination}</div>
+            <div class="text-muted small">Booked on ${new Date(reservation.createdAt).toLocaleString()}</div>
+          </div>
+          <div class="mb-3">
+            <div class="fw-semibold">Passengers</div>
+            <ul class="list-group list-group-flush">
+              ${passengerBadges}
+            </ul>
+          </div>
+          <div class="d-flex justify-content-between">
+            <div>
+              <div class="text-muted small">Base Fare Total</div>
+              <div>₱${reservation.baseFareTotal.toFixed(2)}</div>
+            </div>
+            <div>
+              <div class="text-muted small">Optional Packages</div>
+              <div>₱${reservation.optionalPackageTotal.toFixed(2)}</div>
+            </div>
+            <div>
+              <div class="text-muted small">Grand Total</div>
+              <div class="fw-semibold">₱${reservation.grandTotal.toFixed(2)}</div>
+            </div>
+          </div>
+          <a class="btn btn-outline-primary mt-3" href="/reservations/${reservation._id}">View full details</a>
+        `;
+      };
+
+      list.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-reservation-id]');
+        if (!button) return;
+
+        list.querySelectorAll('.list-group-item').forEach((item) => item.classList.remove('active'));
+        button.classList.add('active');
+        renderReservation(button.dataset.reservationId);
+      });
+
+      const firstButton = list.querySelector('[data-reservation-id]');
+      if (firstButton) {
+        firstButton.classList.add('active');
+        renderReservation(firstButton.dataset.reservationId);
+      }
+    })();
+  </script>
+{{/if}}
+

@@ -1,0 +1,50 @@
+<section class="row g-4">
+  <div class="col-12 col-lg-7">
+    <div class="p-4 border rounded-3 bg-light h-100">
+      <h1 class="h3 mb-3">Welcome to CCS Airlines</h1>
+      <p class="mb-4">
+        Book flights, manage reservations, and customise your travel experience with optional
+        packages tailored to your needs.
+      </p>
+      <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-primary" href="/flights/search">Find Flights</a>
+        <a class="btn btn-outline-primary" href="/reservations/new">Book a Flight</a>
+        <a class="btn btn-outline-secondary" href="/reservations">View Reservations</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-5">
+    <div class="card h-100">
+      <div class="card-header bg-success text-white">
+        <h2 class="h5 mb-0">Upcoming Flights</h2>
+      </div>
+      <div class="card-body">
+        {{#if upcomingFlights.length}}
+          <ul class="list-group list-group-flush">
+            {{#each upcomingFlights}}
+              <li class="list-group-item px-0">
+                <div class="d-flex align-items-center justify-content-between">
+                  <div>
+                    <div class="fw-semibold">{{flightNumber}}</div>
+                    <div class="text-muted small">{{route}}</div>
+                  </div>
+                  <a class="btn btn-sm btn-outline-success" href="/reservations/new?flightId={{_id}}">
+                    Book
+                  </a>
+                </div>
+                <div class="small text-muted mt-1">
+                  {{formatDate departureTime}} · Aircraft: {{aircraftType}}
+                </div>
+              </li>
+            {{/each}}
+          </ul>
+        {{else}}
+          <p class="text-muted mb-0">
+            No upcoming flights are scheduled yet. Check back soon or search for available flights.
+          </p>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+</section>
+

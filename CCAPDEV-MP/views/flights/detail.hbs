@@ -1,0 +1,53 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 mb-1">Flight {{flight.flightNumber}}</h1>
+    <p class="text-muted mb-0">{{flight.route}}</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="/flights">Back to flights</a>
+</div>
+
+<div class="row g-4">
+  <div class="col-12 col-lg-7">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Schedule</h2>
+        <dl class="row mb-0">
+          <dt class="col-4 text-muted">Departure</dt>
+          <dd class="col-8">{{formatDate flight.departureTime}}</dd>
+          <dt class="col-4 text-muted">Arrival</dt>
+          <dd class="col-8">{{formatDate flight.arrivalTime}}</dd>
+          <dt class="col-4 text-muted">Aircraft</dt>
+          <dd class="col-8">{{flight.aircraftType}}</dd>
+          <dt class="col-4 text-muted">Seat Capacity</dt>
+          <dd class="col-8">{{flight.seatCapacity}}</dd>
+          <dt class="col-4 text-muted">Base Fare</dt>
+          <dd class="col-8">{{currency flight.baseFare}}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-5">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Amenities</h2>
+        {{#if flight.amenities.length}}
+          <div class="d-flex flex-wrap gap-2">
+            {{#each flight.amenities}}
+              <span class="badge text-bg-primary">{{this}}</span>
+            {{/each}}
+          </div>
+        {{else}}
+          <p class="text-muted mb-0">No additional amenities listed for this flight.</p>
+        {{/if}}
+      </div>
+    </div>
+    <div class="card shadow-sm mt-3">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Ready to book?</h2>
+        <p class="text-muted">Reserve seats and customise optional packages for your passengers.</p>
+        <a class="btn btn-success w-100" href="/reservations/new?flightId={{flight._id}}">Book this flight</a>
+      </div>
+    </div>
+  </div>
+</div>
+
