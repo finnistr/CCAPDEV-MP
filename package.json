@@ -1,0 +1,21 @@
+{
+  "name": "ccapdev-mp-main",
+  "version": "1.0.0",
+  "description": "Online Airline Ticketing System",
+  "main": "conn.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-handlebars": "^8.0.3",
+    "mongodb": "^7.0.0",
+    "mongoose": "^9.0.0"
+  }
+}
