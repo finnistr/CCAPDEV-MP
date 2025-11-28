@@ -8,4 +8,5 @@ Prerequisite:
 MongoDB installed in the OS
 
 npm init -y 
-npm install express mongoose express-handlebars express-session bcryptjs
+
+npm install express mongoose express-handlebars express-session bcryptjs winston winston-daily-rotate-file
