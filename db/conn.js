@@ -1,26 +1,23 @@
-import { MongoClient } from 'mongodb';
+const mongoose = require('mongoose');
 
 const mongoURI = process.env.MONGODB_URI;
-const client =  new MongoClient(mongoURI);
 
-export function connectToMongo (callback) {
-    client.connect().then( (client) => {
-        return callback();
-    }).catch( err => {
-        callback(err);
-    })
-}
-
-export function getDb(dbName = process.env.DB_NAME) {
-    return client.db(dbName);
+function connectToMongo(callback) {
+    mongoose.connect(mongoURI, { })
+        .then(() => callback())
+        .catch(err => callback(err));
 }
 
 function signalHandler() {
-    console.log("Closing MongoDB connection...");
-    client.close();
+    console.log("Closing Mongoose connection...");
+    mongoose.connection.close();
     process.exit();
 }
 
 process.on('SIGINT', signalHandler);
 process.on('SIGTERM', signalHandler);
 process.on('SIGQUIT', signalHandler);
+
+module.exports = {
+    connectToMongo
+};
