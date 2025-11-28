@@ -1,0 +1,36 @@
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <h2>My Profile</h2>
+    <div class="card">
+      <div class="card-body">
+      {{#if update}}
+        <div class="alert alert-success">{{update}}</div>
+      {{/if}}
+        <form method="POST" action="/profile/update">
+          <input type="hidden" name="userId" value="{{user._id}}">
+          <div class="mb-3">
+            <label for="name" class="form-label">Full Name</label>
+            <input type="text" class="form-control" id="name" name="name" value="{{user.name}}" required>
+          </div>
+          
+          <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" name="email" value="{{user.email}}" required>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Role</label>
+            <input type="text" class="form-control" value="{{user.role}}" disabled>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Member Since</label>
+            <input type="text" class="form-control" value="{{user.createdAt}}" disabled>
+          </div>
+          
+          <button type="submit" class="btn btn-primary">Update Profile</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
