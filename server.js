@@ -7,11 +7,18 @@ const bcrypt = require('bcryptjs');
 
 const app = express();
 
+const logger = require('./logger');
+
 // MongoDB Connection
-mongoose.connect('mongodb://localhost:27017/ccs_airlines', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
+mongoose.connect('mongodb://localhost:27017/ccs_airlines', 
+
+ // 
+// {
+  // useNewUrlParser: true,
+  // useUnifiedTopology: true
+//}
+
+)
 .then(() => console.log('MongoDB Connected'))
 .catch(err => {
   console.error('MongoDB Connection Error:', err);
@@ -70,6 +77,18 @@ const requireAdmin = (req, res, next) => {
   }
   next();
 };
+
+// Logging Middleware
+const requestLogger = (req, res, next) => {
+  const { method, url } = req;
+  const user = req.session.userId ? `User:${req.session.userId}` : 'Guest';
+  
+  // Log every request as 'info'
+  logger.info(`${method} ${url} - ${user}`);
+  next();
+};
+
+app.use(requestLogger);
 
 // Models
 const User = require('./models/User');
@@ -153,6 +172,7 @@ app.get('/logout', (req, res) => {
   req.session.destroy();
   res.redirect('/login');
 });
+
 
 // Profile
 app.get('/profile', requireAuth, async (req, res) => {
@@ -288,55 +308,72 @@ app.get('/reservations/new/:flightId', requireAuth, async (req, res) => {
   }
 });
 
+// Reservation Route using Winston 
 app.post('/reservations/create', requireAuth, async (req, res) => {
   try {
     const { flightId, seat, meal, baggageWeight, passport } = req.body;
     
-    console.log('Creating reservation:', { flightId, seat, meal, baggageWeight, passport });
+    // 1. Validate Baggage Weight (Fixes 'weight is not defined' error)
+    const weight = parseInt(baggageWeight) || 0;
     
-    // Get flight details
-    const flight = await Flight.findById(flightId);
-    if (!flight || !flight.isAvailable) {
-      console.error('Flight not found or not available');
-      return res.redirect('/flights/search');
+    if (weight < 0 || weight > 50) {
+      logger.warn(`Invalid baggage input from User ${req.session.userId}: ${baggageWeight}kg`);
+      
+      // We need to re-fetch flight data to re-render the form
+      const flight = await Flight.findById(flightId).lean();
+      return res.render('reservationform', {
+        user: { name: req.session.userName },
+        flight: flight,
+        bookedSeats: JSON.stringify(flight.bookedSeats || []),
+        error: 'Invalid baggage weight. Maximum is 50kg.'
+      });
     }
-    
-    // Check if seat is already booked
-    if (flight.bookedSeats && flight.bookedSeats.includes(seat)) {
-      console.error('Seat already booked:', seat);
-      return res.redirect(`/reservations/new/${flightId}`);
+
+    // 2. Concurrency Check (Prevent double booking)
+    // Try to find the flight AND ensure the seat is NOT in bookedSeats
+    const flight = await Flight.findOneAndUpdate(
+      { 
+        _id: flightId, 
+        bookedSeats: { $ne: seat }, 
+        isAvailable: true
+      },
+      { $push: { bookedSeats: seat } },
+      { new: true }
+    );
+
+    if (!flight) {
+      logger.warn(`Seat collision: User ${req.session.userId} tried to book taken seat ${seat} on flight ${flightId}`);
+      
+      // Fetch fresh data to show updated seat map
+      const freshFlightData = await Flight.findById(flightId).lean();
+      return res.render('reservationform', {
+        user: { name: req.session.userName },
+        flight: freshFlightData,
+        bookedSeats: JSON.stringify(freshFlightData.bookedSeats || []),
+        error: 'Sorry, that seat was just booked by another user. Please select another.'
+      });
     }
-    
-    // Create reservation
+
+    // 3. Create Reservation
     const reservation = new Reservation({
       userId: req.session.userId,
       flightId,
       passengerName: req.session.userName,
-      passport,
+      passport, 
       seat,
       meal,
-      baggageWeight: parseInt(baggageWeight) || 0,
+      baggageWeight: weight, // Use the parsed weight
       status: 'confirmed'
     });
     
-    // Calculate total price
     reservation.calculateTotal(flight.price);
-    
-    // Save reservation
     await reservation.save();
-    console.log('Reservation created:', reservation._id);
-    
-    // Update flight with booked seat
-    if (!flight.bookedSeats) {
-      flight.bookedSeats = [];
-    }
-    flight.bookedSeats.push(seat);
-    await flight.save();
-    console.log('Flight updated with booked seat:', seat);
-    
+
+    logger.info(`Reservation created: ${reservation._id} for ${req.session.userName}`);
     res.redirect('/reservations/list');
+
   } catch (error) {
-    console.error('Error creating reservation:', error);
+    logger.error(`Booking Error: ${error.message}`, { stack: error.stack });
     res.redirect('/flights/search');
   }
 });
