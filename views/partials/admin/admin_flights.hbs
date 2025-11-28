@@ -1,0 +1,63 @@
+<h2>Flight Management</h2>
+
+<a href="/admin/flights/new?userId={{userId}}" class="btn btn-success mb-3">Add New Flight</a>
+
+{{#if flights}}
+  <div class="table-responsive">
+    <table class="table table-striped table-hover">
+      <thead class="table-dark">
+        <tr>
+          <th>Flight No.</th>
+          <th>Airline</th>
+          <th>Route</th>
+          <th>Departure</th>
+          <th>Arrival</th>
+          <th>Aircraft</th>
+          <th>Seats</th>
+          <th>Price</th>
+          <th>Availability</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each flights}}
+          <tr>
+            <td>{{this.flightNumber}}</td>
+            <td>{{this.airline}}</td>
+            <td>{{this.origin}} → {{this.destination}}</td>
+            <td>{{formatDate this.departureTime}}<br><small>{{formatTime this.departureTime}}</small></td>
+            <td>{{formatDate this.arrivalTime}}<br><small>{{formatTime this.arrivalTime}}</small></td>
+            <td>{{this.aircraft}}</td>
+            <td>
+              <span class="badge bg-info">{{this.availableSeats}}</span> / {{this.seatCapacity}}
+              <br><small class="text-muted">{{this.bookedSeatsCount}} booked</small>
+            </td>
+            <td>₱{{this.price}}</td>
+            <td>
+              {{#if this.isAvailable}}
+                <span class="badge bg-success">Available</span>
+              {{else}}
+                <span class="badge bg-secondary">Unavailable</span>
+              {{/if}}
+            </td>
+            <td>
+              <a href="/admin/flights/edit/{{this._id}}?userId={{../userId}}" 
+                class="btn btn-sm btn-warning mb-1">Edit</a>
+
+              <form method="POST" 
+                    action="/admin/flights/delete/{{this._id}}?userId={{../userId}}" 
+                    style="display:inline;">
+                <button type="submit" class="btn btn-sm btn-danger mb-1"
+                  onclick="return confirm('Delete this flight? This will cancel all associated reservations.')">
+                  Delete
+                </button>
+              </form>
+            </td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+{{else}}
+  <div class="alert alert-info">No flights available. Add your first flight!</div>
+{{/if}}
